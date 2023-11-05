@@ -13,7 +13,7 @@ const carsData = [
     model: "Camry",
     year: 2020,
     color: "Blue",
-    owner_id: 1,
+    driver_id: 1,
   },
   {
     car_id: 2,
@@ -21,7 +21,7 @@ const carsData = [
     model: "Civic",
     year: 2019,
     color: "Red",
-    owner_id: 2,
+    driver_id: 2,
   },
   {
     car_id: 3,
@@ -29,7 +29,7 @@ const carsData = [
     model: "Focus",
     year: 2021,
     color: "Silver",
-    owner_id: 3,
+    driver_id: 3,
   },
   {
     car_id: 4,
@@ -37,7 +37,7 @@ const carsData = [
     model: "Altima",
     year: 2018,
     color: "Black",
-    owner_id: 3,
+    driver_id: 3,
   },
   {
     car_id: 5,
@@ -45,7 +45,7 @@ const carsData = [
     model: "Malibu",
     year: 2022,
     color: "White",
-    owner_id: 5,
+    driver_id: 5,
   },
   {
     car_id: 6,
@@ -53,7 +53,7 @@ const carsData = [
     model: "GT-R",
     year: 2022,
     color: "White",
-    owner_id: 4,
+    driver_id: 4,
   },
 ];
 
@@ -111,6 +111,13 @@ const technicalInspectionData = [
     technical_inspection_id: 8,
     car_id: 5,
     datetime: new Date("2022-02-15"),
+    is_pass: true,
+    description: "Passed inspection",
+  },
+  {
+    technical_inspection_id: 9,
+    car_id: 2,
+    datetime: new Date("2023-11-05"),
     is_pass: true,
     description: "Passed inspection",
   },

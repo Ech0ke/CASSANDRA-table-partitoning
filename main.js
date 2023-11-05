@@ -9,14 +9,17 @@ const client = new cassandra.Client({
 
 const dropTables = [
   "DROP TABLE IF EXISTS Driver;",
+  "DROP TABLE IF EXISTS DriverByPersonCode;",
   "DROP TABLE IF EXISTS Car;",
-  "DROP TABLE IF EXISTS Technical_Inspection;",
+  "DROP TABLE IF EXISTS CarByYear;",
+  "DROP TABLE IF EXISTS TechnicalInspection;",
+  "DROP TABLE IF EXISTS CarByMake;",
 ];
 
 const createTables = [
-  "CREATE TABLE IF NOT EXISTS Driver (driver_id INT, name TEXT, person_code INT, PRIMARY KEY (driver_id));",
-  "CREATE TABLE IF NOT EXISTS Car (car_id INT, owner_id INT, make TEXT, model TEXT, year INT, color TEXT, PRIMARY KEY (car_id));",
-  "CREATE TABLE IF NOT EXISTS Technical_Inspection (technical_inspection_id INT, car_id INT, datetime TIMESTAMP, is_pass BOOLEAN, description TEXT, PRIMARY KEY (technical_inspection_id));",
+  "CREATE TABLE IF NOT EXISTS Driver (driver_id INT, name TEXT, person_code INT, PRIMARY KEY ((driver_id), name));",
+  "CREATE TABLE IF NOT EXISTS Car (car_id INT, driver_id INT, make TEXT, model TEXT, year INT, color TEXT, PRIMARY KEY (car_id));",
+  "CREATE TABLE IF NOT EXISTS TechnicalInspection (technical_inspection_id INT, car_id INT, datetime TIMESTAMP, is_pass BOOLEAN, description TEXT, PRIMARY KEY ((car_id), is_pass, technical_inspection_id));",
 ];
 
 client
@@ -31,10 +34,22 @@ client
     // Use Promise.all to ensure all table creation commands are executed before proceeding
     return Promise.all(createTables.map((table) => client.execute(table)));
   })
-  .then(() => {
+  .then(async () => {
     console.log("Tables created successfully");
-    return functions.insertData(client); // Insert data after tables are created
+    return await functions.createPartitionTables(client);
+  })
+  .then(async () => {
+    console.log("Partition tables created successfully");
+    return await functions.insertData(client); // Insert data after tables are created
+  })
+  .then(async () => {
+    return await functions.executeQueries(client);
+  })
+  .then(() => {
+    // Close the Cassandra connection
+    client.shutdown();
   })
   .catch((err) => {
     console.error("Error:", err);
+    client.shutdown();
   });
