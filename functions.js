@@ -82,8 +82,8 @@ const insertData = async (client) => {
 const createPartitionTables = async (client) => {
   try {
     const createPartitionedTableQueries = [
-      "CREATE TABLE IF NOT EXISTS CarByYear (year INT, car_id INT, make TEXT, model TEXT, color TEXT, driver_id INT, PRIMARY KEY ((year), car_id, driver_id));",
-      "CREATE TABLE IF NOT EXISTS CarByMake (make TEXT, model TEXT, car_id INT, driver_id INT, year INT, color TEXT, PRIMARY KEY ((make), model, car_id));",
+      "CREATE TABLE IF NOT EXISTS CarByYear (year INT, car_id INT, make TEXT, model TEXT, color TEXT, driver_id INT, PRIMARY KEY ((year), make, model));",
+      "CREATE TABLE IF NOT EXISTS CarByMake (make TEXT, model TEXT, car_id INT, driver_id INT, year INT, color TEXT, PRIMARY KEY ((make), model, year));",
       "CREATE TABLE IF NOT EXISTS DriverByPersonCode (driver_id INT, name TEXT, person_code INT, PRIMARY KEY ((person_code), name));",
       "CREATE TABLE IF NOT EXISTS TechnicalInspectionByCarId (technical_inspection_id INT, car_id INT, datetime TIMESTAMP, is_pass BOOLEAN, description TEXT, PRIMARY KEY ((car_id), is_pass, technical_inspection_id));",
     ];
@@ -102,7 +102,7 @@ const executeQueries = async (client) => {
       "SELECT driver_id, model, year, color FROM CarByMake WHERE make = 'Nissan';";
     const query1Result = await client.execute(query1);
     let carData = query1Result.rows;
-    const driverIds = carData.map((row) => row.driver_id);
+    let driverIds = carData.map((row) => row.driver_id);
 
     const query2 = "SELECT name, driver_id FROM Driver WHERE driver_id IN ?;";
     const query2Result = await client.execute(query2, [driverIds], {
@@ -123,13 +123,40 @@ const executeQueries = async (client) => {
       );
     });
 
-    const query3 = "SELECT car_id, make, model, year FROM Car;";
+    const query3 =
+      "SELECT driver_id, model, make, year, color FROM CarByYear WHERE year IN (2020, 2021, 2022, 2023);";
     const query3Result = await client.execute(query3);
     carData = query3Result.rows;
+    driverIds = carData.map((row) => row.driver_id);
+
+    const query4 = "SELECT name, driver_id FROM Driver WHERE driver_id IN ?;";
+    const query4Result = await client.execute(query4, [driverIds], {
+      prepare: true,
+    });
+    console.log(`\nDrivers that own cars made after 2020:`);
+    console.log(
+      `${"Driver Name".padEnd(18)}${"Car Make".padEnd(10)}${"Car Model".padEnd(
+        10
+      )}${"Car Year".padEnd(10)}${"Car Color".padEnd(10)}`
+    );
+    query4Result.rows.forEach((driver) => {
+      const carInfo = carData.find((car) => car.driver_id === driver.driver_id);
+      console.log(
+        `${driver.name.padEnd(18)}${carInfo.make.padEnd(
+          10
+        )}${carInfo.model.padEnd(10)}${carInfo.year
+          .toString()
+          .padEnd(10)}${carInfo.color.padEnd(10)}`
+      );
+    });
+
+    const query5 = "SELECT car_id, make, model, year FROM Car;";
+    const query5Result = await client.execute(query5);
+    carData = query5Result.rows;
     const carIds = carData.map((row) => row.car_id);
-    const query4 =
+    const query6 =
       "SELECT datetime, car_id, is_pass FROM TechnicalInspectionByCarId WHERE car_id IN ? AND is_pass = TRUE;";
-    const query4Result = await client.execute(query4, [carIds], {
+    const query6Result = await client.execute(query6, [carIds], {
       prepare: true,
     });
     console.log("\nCars that passed technical Inspections:");
@@ -141,7 +168,7 @@ const executeQueries = async (client) => {
       )}`
     );
 
-    query4Result.rows.forEach((inspection) => {
+    query6Result.rows.forEach((inspection) => {
       const formattedDatetime = inspection.datetime
         .toLocaleString("en-US", {
           year: "numeric",
@@ -166,12 +193,12 @@ const executeQueries = async (client) => {
       );
     });
 
-    const query5 =
+    const query7 =
       "SELECT name, driver_id, person_code FROM DriverByPersonCode WHERE person_code = 12345;";
-    const query5Result = await client.execute(query5, null, {
+    const query7Result = await client.execute(query7, null, {
       prepare: true,
     });
-    const foundDriver = query5Result.rows;
+    const foundDriver = query7Result.rows;
 
     console.log(`\nFound driver by person_code: 12345`);
     console.log(
@@ -185,11 +212,11 @@ const executeQueries = async (client) => {
         .padEnd(10)}${foundDriver[0].person_code.toString().padEnd(10)}`
     );
 
-    const query6 =
+    const query8 =
       "INSERT INTO TechnicalInspection (technical_inspection_id, car_id, datetime, is_pass, description) VALUES (?, ?, ?, ?, ?) IF datetime <= ?;";
 
-    const query6Result = await client.execute(
-      query6,
+    const query8Result = await client.execute(
+      query8,
       [
         10,
         3,
@@ -202,7 +229,7 @@ const executeQueries = async (client) => {
     );
 
     console.log(`\nResult of inserting technical inspection with future date`);
-    console.log(query6Result);
+    console.log(query8Result);
   } catch (error) {
     console.error("Error executing query:", error);
   }
