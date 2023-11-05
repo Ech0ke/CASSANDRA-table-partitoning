@@ -12,9 +12,9 @@ const dropTables = [
   "DROP TABLE IF EXISTS DriverByPersonCode;",
   "DROP TABLE IF EXISTS Car;",
   "DROP TABLE IF EXISTS CarByYear;",
+  "DROP TABLE IF EXISTS CarByMake;",
   "DROP TABLE IF EXISTS TechnicalInspection;",
   "DROP TABLE IF EXISTS TechnicalInspectionByCarId;",
-  "DROP TABLE IF EXISTS CarByMake;",
 ];
 
 const createTables = [
